@@ -104,12 +104,13 @@ class DRIT(nn.Module):
       std_a = self.logvar_a.mul(0.5).exp_()
       eps = self.get_z_random(std_a.size(0), std_a.size(1), 'gauss')
       self.z_attr_a = eps.mul(std_a).add_(self.mu_a)
-      std_b = self.logvar_b.mul(0.5).exp_()
-      eps = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
-      self.z_attr_b = eps.mul(std_b).add_(self.mu_b)
+      # std_b = self.logvar_b.mul(0.5).exp_()
+      # eps = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
+      # self.z_attr_b = eps.mul(std_b).add_(self.mu_b)
     else:
       self.z_attr_a, self.z_attr_b = self.enc_a.forward(image_a, image_b)
     if a2b:
+      self.z_attr_b = None
       output = self.gen.forward_b(self.z_content_a, self.z_attr_b)
     else:
       output = self.gen.forward_a(self.z_content_b, self.z_attr_a)
@@ -134,9 +135,9 @@ class DRIT(nn.Module):
       std_a = self.logvar_a.mul(0.5).exp_()
       eps_a = self.get_z_random(std_a.size(0), std_a.size(1), 'gauss')
       self.z_attr_a = eps_a.mul(std_a).add_(self.mu_a)
-      std_b = self.logvar_b.mul(0.5).exp_()
-      eps_b = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
-      self.z_attr_b = eps_b.mul(std_b).add_(self.mu_b)
+      # std_b = self.logvar_b.mul(0.5).exp_()
+      # eps_b = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
+      # self.z_attr_b = eps_b.mul(std_b).add_(self.mu_b)
     else:
       self.z_attr_a, self.z_attr_b = self.enc_a.forward(self.real_A_encoded, self.real_B_encoded)
 
@@ -147,14 +148,14 @@ class DRIT(nn.Module):
     input_content_forA = torch.cat((self.z_content_b, self.z_content_a, self.z_content_b),0)
     input_content_forB = torch.cat((self.z_content_a, self.z_content_b, self.z_content_a),0)
     input_attr_forA = torch.cat((self.z_attr_a, self.z_attr_a, self.z_random),0)
-    input_attr_forB = torch.cat((self.z_attr_b, self.z_attr_b, self.z_random),0)
+    # input_attr_forB = torch.cat((self.z_attr_b, self.z_attr_b, self.z_random),0)
     output_fakeA = self.gen.forward_a(input_content_forA, input_attr_forA)
-    output_fakeB = self.gen.forward_b(input_content_forB, input_attr_forB)
+    output_fakeB = self.gen.forward_b(input_content_forB)#, input_attr_forB)
     self.fake_A_encoded, self.fake_AA_encoded, self.fake_A_random = torch.split(output_fakeA, self.z_content_a.size(0), dim=0)
     self.fake_B_encoded, self.fake_BB_encoded, self.fake_B_random = torch.split(output_fakeB, self.z_content_a.size(0), dim=0)
 
     # get reconstructed encoded z_c
-    self.z_content_recon_b, self.z_content_recon_a = self.enc_c.forward(self.fake_A_encoded, self.fake_B_encoded)
+    self.z_content_recon_a, self.z_content_recon_b = self.enc_c.forward(self.fake_A_encoded, self.fake_B_encoded)
 
     # get reconstructed encoded z_a
     if self.concat:
@@ -162,15 +163,15 @@ class DRIT(nn.Module):
       std_a = self.logvar_recon_a.mul(0.5).exp_()
       eps_a = self.get_z_random(std_a.size(0), std_a.size(1), 'gauss')
       self.z_attr_recon_a = eps_a.mul(std_a).add_(self.mu_recon_a)
-      std_b = self.logvar_recon_b.mul(0.5).exp_()
-      eps_b = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
-      self.z_attr_recon_b = eps_b.mul(std_b).add_(self.mu_recon_b)
+      # std_b = self.logvar_recon_b.mul(0.5).exp_()
+      # eps_b = self.get_z_random(std_b.size(0), std_b.size(1), 'gauss')
+      # self.z_attr_recon_b = eps_b.mul(std_b).add_(self.mu_recon_b)
     else:
       self.z_attr_recon_a, self.z_attr_recon_b = self.enc_a.forward(self.fake_A_encoded, self.fake_B_encoded)
 
     # second cross translation
     self.fake_A_recon = self.gen.forward_a(self.z_content_recon_a, self.z_attr_recon_a)
-    self.fake_B_recon = self.gen.forward_b(self.z_content_recon_b, self.z_attr_recon_b)
+    self.fake_B_recon = self.gen.forward_b(self.z_content_recon_b)#, self.z_attr_recon_b)
 
     # for display
     self.image_display = torch.cat((self.real_A_encoded[0:1].detach().cpu(), self.fake_B_encoded[0:1].detach().cpu(), \
@@ -224,11 +225,12 @@ class DRIT(nn.Module):
     self.disB_loss = loss_D1_B.item()
     self.disB_opt.step()
 
+    ###NOTE get rid of this??
     # update disB2
-    self.disB2_opt.zero_grad()
-    loss_D2_B = self.backward_D(self.disB2, self.real_B_random, self.fake_B_random)
-    self.disB2_loss = loss_D2_B.item()
-    self.disB2_opt.step()
+    # self.disB2_opt.zero_grad()
+    # loss_D2_B = self.backward_D(self.disB2, self.real_B_random, self.fake_B_random)
+    # self.disB2_loss = loss_D2_B.item()
+    # self.disB2_opt.step()
 
     # update disContent
     self.disContent_opt.zero_grad()
@@ -360,7 +362,7 @@ class DRIT(nn.Module):
     # latent regression loss
     if self.concat:
       loss_z_L1_a = torch.mean(torch.abs(self.mu2_a - self.z_random)) * 10
-      loss_z_L1_b = torch.mean(torch.abs(self.mu2_b - self.z_random)) * 10
+      # loss_z_L1_b = torch.mean(torch.abs(self.mu2_b - self.z_random)) * 10
     else:
       loss_z_L1_a = torch.mean(torch.abs(self.z_attr_random_a - self.z_random)) * 10
       loss_z_L1_b = torch.mean(torch.abs(self.z_attr_random_b - self.z_random)) * 10

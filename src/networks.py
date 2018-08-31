@@ -215,16 +215,16 @@ class E_attr_concat(nn.Module):
     self.fcVar_A = nn.Sequential(*[nn.Linear(output_ndf, output_nc)])
     self.conv_A = nn.Sequential(*conv_layers_A)
 
-    conv_layers_B = [nn.ReflectionPad2d(1)]
-    conv_layers_B += [nn.Conv2d(input_dim_b, ndf, kernel_size=4, stride=2, padding=0, bias=True)]
-    for n in range(1, n_blocks):
-      input_ndf = ndf * min(max_ndf, n)  # 2**(n-1)
-      output_ndf = ndf * min(max_ndf, n+1)  # 2**n
-      conv_layers_B += [BasicBlock(input_ndf, output_ndf, norm_layer, nl_layer)]
-    conv_layers_B += [nl_layer(), nn.AdaptiveAvgPool2d(1)] # AvgPool2d(13)
-    self.fc_B = nn.Sequential(*[nn.Linear(output_ndf, output_nc)])
-    self.fcVar_B = nn.Sequential(*[nn.Linear(output_ndf, output_nc)])
-    self.conv_B = nn.Sequential(*conv_layers_B)
+    # conv_layers_B = [nn.ReflectionPad2d(1)]
+    # conv_layers_B += [nn.Conv2d(input_dim_b, ndf, kernel_size=4, stride=2, padding=0, bias=True)]
+    # for n in range(1, n_blocks):
+    #   input_ndf = ndf * min(max_ndf, n)  # 2**(n-1)
+    #   output_ndf = ndf * min(max_ndf, n+1)  # 2**n
+    #   conv_layers_B += [BasicBlock(input_ndf, output_ndf, norm_layer, nl_layer)]
+    # conv_layers_B += [nl_layer(), nn.AdaptiveAvgPool2d(1)] # AvgPool2d(13)
+    # self.fc_B = nn.Sequential(*[nn.Linear(output_ndf, output_nc)])
+    # self.fcVar_B = nn.Sequential(*[nn.Linear(output_ndf, output_nc)])
+    # self.conv_B = nn.Sequential(*conv_layers_B)
 
   def forward(self, xa, xb):
     x_conv_A = self.conv_A(xa)
@@ -232,10 +232,10 @@ class E_attr_concat(nn.Module):
     output_A = self.fc_A(conv_flat_A)
     outputVar_A = self.fcVar_A(conv_flat_A)
     x_conv_B = self.conv_B(xb)
-    conv_flat_B = x_conv_B.view(xb.size(0), -1)
-    output_B = self.fc_B(conv_flat_B)
-    outputVar_B = self.fcVar_B(conv_flat_B)
-    return output_A, outputVar_A, output_B, outputVar_B
+    # conv_flat_B = x_conv_B.view(xb.size(0), -1)
+    # output_B = self.fc_B(conv_flat_B)
+    # outputVar_B = self.fcVar_B(conv_flat_B)
+    return output_A, outputVar_A, None, None#, output_B, outputVar_B
 
   def forward_a(self, xa):
     x_conv_A = self.conv_A(xa)
@@ -244,12 +244,12 @@ class E_attr_concat(nn.Module):
     outputVar_A = self.fcVar_A(conv_flat_A)
     return output_A, outputVar_A
 
-  def forward_b(self, xb):
-    x_conv_B = self.conv_B(xb)
-    conv_flat_B = x_conv_B.view(xb.size(0), -1)
-    output_B = self.fc_B(conv_flat_B)
-    outputVar_B = self.fcVar_B(conv_flat_B)
-    return output_B, outputVar_B
+  # def forward_b(self, xb):
+  #   x_conv_B = self.conv_B(xb)
+  #   conv_flat_B = x_conv_B.view(xb.size(0), -1)
+  #   output_B = self.fc_B(conv_flat_B)
+  #   outputVar_B = self.fcVar_B(conv_flat_B)
+  #   return output_B, outputVar_B
 
 ####################################################################
 #--------------------------- Generators ----------------------------
@@ -384,21 +384,29 @@ class G_concat(nn.Module):
     out4 = self.decA4(x_and_z4)
     return out4
 
-  def forward_b(self, x, z):
+  def forward_b(self, x):
     out0 = self.dec_share(x)
-    z_img = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), x.size(2), x.size(3))
-    x_and_z = torch.cat([out0,  z_img], 1)
-    out1 = self.decB1(x_and_z)
-    z_img2 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out1.size(2), out1.size(3))
-    x_and_z2 = torch.cat([out1, z_img2], 1)
-    out2 = self.decB2(x_and_z2)
-    z_img3 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out2.size(2), out2.size(3))
-    x_and_z3 = torch.cat([out2, z_img3], 1)
-    out3 = self.decB3(x_and_z3)
-    z_img4 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out3.size(2), out3.size(3))
-    x_and_z4 = torch.cat([out3, z_img4], 1)
-    out4 = self.decB4(x_and_z4)
+    out1 = self.decB1(out0)
+    out2 = self.decB2(out1)
+    out3 = self.decB3(out2)
+    out4 = self.decB4(out3)
     return out4
+
+  # def forward_b(self, x, z):
+  #   out0 = self.dec_share(x)
+  #   z_img = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), x.size(2), x.size(3))
+  #   x_and_z = torch.cat([out0,  z_img], 1)
+  #   out1 = self.decB1(x_and_z)
+  #   z_img2 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out1.size(2), out1.size(3))
+  #   x_and_z2 = torch.cat([out1, z_img2], 1)
+  #   out2 = self.decB2(x_and_z2)
+  #   z_img3 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out2.size(2), out2.size(3))
+  #   x_and_z3 = torch.cat([out2, z_img3], 1)
+  #   out3 = self.decB3(x_and_z3)
+  #   z_img4 = z.view(z.size(0), z.size(1), 1, 1).expand(z.size(0), z.size(1), out3.size(2), out3.size(3))
+  #   x_and_z4 = torch.cat([out3, z_img4], 1)
+  #   out4 = self.decB4(x_and_z4)
+  #   return out4
 
 ####################################################################
 #------------------------- Basic Functions -------------------------
