@@ -231,7 +231,7 @@ class E_attr_concat(nn.Module):
     conv_flat_A = x_conv_A.view(xa.size(0), -1)
     output_A = self.fc_A(conv_flat_A)
     outputVar_A = self.fcVar_A(conv_flat_A)
-    x_conv_B = self.conv_B(xb)
+    # x_conv_B = self.conv_B(xb)
     # conv_flat_B = x_conv_B.view(xb.size(0), -1)
     # output_B = self.fc_B(conv_flat_B)
     # outputVar_B = self.fcVar_B(conv_flat_B)
@@ -351,17 +351,17 @@ class G_concat(nn.Module):
     self.decA3 = nn.Sequential(*[decA3])
     self.decA4 = nn.Sequential(*decA4)
 
-    tch = 256+self.nz
+    tch = 256#+self.nz
     decB1 = []
     for i in range(0, 3):
       decB1 += [INSResBlock(tch, tch)]
-    tch = tch + self.nz
+    # tch = tch + self.nz
     decB2 = ReLUINSConvTranspose2d(tch, tch//2, kernel_size=3, stride=2, padding=1, output_padding=1)
     tch = tch//2
-    tch = tch + self.nz
+    # tch = tch + self.nz
     decB3 = ReLUINSConvTranspose2d(tch, tch//2, kernel_size=3, stride=2, padding=1, output_padding=1)
     tch = tch//2
-    tch = tch + self.nz
+    # tch = tch + self.nz
     decB4 = [nn.ConvTranspose2d(tch, output_dim_b, kernel_size=1, stride=1, padding=0)]+[nn.Tanh()]
     self.decB1 = nn.Sequential(*decB1)
     self.decB2 = nn.Sequential(*[decB2])

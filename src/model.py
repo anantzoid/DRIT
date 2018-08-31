@@ -298,11 +298,11 @@ class DRIT(nn.Module):
     if self.concat:
       kl_element_a = self.mu_a.pow(2).add_(self.logvar_a.exp()).mul_(-1).add_(1).add_(self.logvar_a)
       loss_kl_za_a = torch.sum(kl_element_a).mul_(-0.5) * 0.01
-      kl_element_b = self.mu_b.pow(2).add_(self.logvar_b.exp()).mul_(-1).add_(1).add_(self.logvar_b)
-      loss_kl_za_b = torch.sum(kl_element_b).mul_(-0.5) * 0.01
+      # kl_element_b = self.mu_b.pow(2).add_(self.logvar_b.exp()).mul_(-1).add_(1).add_(self.logvar_b)
+      # loss_kl_za_b = torch.sum(kl_element_b).mul_(-0.5) * 0.01
     else:
       loss_kl_za_a = self._compute_kl(self.z_attr_a) * 0.01
-      loss_kl_za_b = self._compute_kl(self.z_attr_b) * 0.01
+      # loss_kl_za_b = self._compute_kl(self.z_attr_b) * 0.01
 
     # KL loss - z_c
     loss_kl_zc_a = self._compute_kl(self.z_content_a) * 0.01
@@ -319,7 +319,7 @@ class DRIT(nn.Module):
              loss_G_L1_AA + loss_G_L1_BB + \
              loss_G_L1_A + loss_G_L1_B + \
              loss_kl_zc_a + loss_kl_zc_b + \
-             loss_kl_za_a + loss_kl_za_b
+             loss_kl_za_a# + loss_kl_za_b
 
     loss_G.backward(retain_graph=True)
 
@@ -328,7 +328,7 @@ class DRIT(nn.Module):
     self.gan_loss_acontent = loss_G_GAN_Acontent.item()
     self.gan_loss_bcontent = loss_G_GAN_Bcontent.item()
     self.kl_loss_za_a = loss_kl_za_a.item()
-    self.kl_loss_za_b = loss_kl_za_b.item()
+    # self.kl_loss_za_b = loss_kl_za_b.item()
     self.kl_loss_zc_a = loss_kl_zc_a.item()
     self.kl_loss_zc_b = loss_kl_zc_b.item()
     self.l1_recon_A_loss = loss_G_L1_A.item()
@@ -367,10 +367,10 @@ class DRIT(nn.Module):
       loss_z_L1_a = torch.mean(torch.abs(self.z_attr_random_a - self.z_random)) * 10
       loss_z_L1_b = torch.mean(torch.abs(self.z_attr_random_b - self.z_random)) * 10
 
-    loss_z_L1 = loss_z_L1_a + loss_z_L1_b + loss_G_GAN2_A + loss_G_GAN2_B
+    loss_z_L1 = loss_z_L1_a + loss_G_GAN2_A + loss_G_GAN2_B
     loss_z_L1.backward()
     self.l1_recon_z_loss_a = loss_z_L1_a.item()
-    self.l1_recon_z_loss_b = loss_z_L1_b.item()
+    # self.l1_recon_z_loss_b = loss_z_L1_b.item()
     self.gan2_loss_a = loss_G_GAN2_A.item()
     self.gan2_loss_b = loss_G_GAN2_B.item()
 
