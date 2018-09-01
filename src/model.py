@@ -155,7 +155,7 @@ class DRIT(nn.Module):
     self.fake_B_encoded, self.fake_BB_encoded, self.fake_B_random = torch.split(output_fakeB, self.z_content_a.size(0), dim=0)
 
     # get reconstructed encoded z_c
-    self.z_content_recon_a, self.z_content_recon_b = self.enc_c.forward(self.fake_A_encoded, self.fake_B_encoded)
+    self.z_content_recon_b, self.z_content_recon_a = self.enc_c.forward(self.fake_A_encoded, self.fake_B_encoded)
 
     # get reconstructed encoded z_a
     if self.concat:
